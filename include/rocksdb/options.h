@@ -1190,6 +1190,7 @@ struct DBOptions {
   // A global cache for table-level rows.
   // Default: nullptr (disabled)
   std::shared_ptr<Cache> row_cache = nullptr;
+
   // If true during flush we skip any entry that has a followed delete
   // entry (#411)
   bool use_clean_delete_during_flush = false;

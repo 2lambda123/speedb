@@ -226,7 +226,7 @@ Status BuildTable(
       // Note :
       // Here "key" integrates 'sequence_number'+'kType'+'user key'.
       if (ioptions.use_clean_delete_during_flush &&
-          tboptions.level_at_creation == PREPARE_FLUSH_BUILDER &&
+          tboptions.reason == TableFileCreationReason::kFlush &&
           ikey.type == kTypeValue) {
         bool was_skipped = false;
         while (range_del_it->Valid()) {

@@ -957,8 +957,6 @@ void ImmutableDBOptions::Dump(Logger* log) const {
                    allow_data_in_errors);
   ROCKS_LOG_HEADER(log, "            Options.db_host_id: %s",
                    db_host_id.c_str());
-  ROCKS_LOG_HEADER(log, "            Options.use_dynamic_delay: %s",
-                   use_dynamic_delay ? "true" : "false");
   ROCKS_LOG_HEADER(log, "            Options.enforce_single_del_contracts: %s",
                    enforce_single_del_contracts ? "true" : "false");
   ROCKS_LOG_HEADER(log, "            Options.use_clean_delete_during_flush: %s",
