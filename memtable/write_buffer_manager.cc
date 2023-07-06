@@ -35,9 +35,8 @@ WriteBufferManager::WriteBufferManager(
       stall_active_(false),
       initiate_flushes_(initiate_flushes),
       flush_initiation_options_(flush_initiation_options),
-      flushes_mu_(new InstrumentedMutex),
       flushes_initiators_mu_(new InstrumentedMutex),
-      flushes_wakeup_cv_(new InstrumentedCondVar(flushes_mu_.get())) {
+      flushes_wakeup_cv_(new InstrumentedCondVar(&flushes_mu_)) {
 #ifndef ROCKSDB_LITE
   if (cache) {
     // Memtable's memory usage tends to fluctuate frequently
@@ -347,7 +346,7 @@ void WriteBufferManager::InitFlushInitiationVars(size_t quota) {
   assert(initiate_flushes_);
 
   {
-    InstrumentedMutexLock lock(flushes_mu_.get());
+    InstrumentedMutexLock lock(&flushes_mu_);
     additional_flush_step_size_ =
         quota * kStartFlushPercentThreshold / 100 /
         flush_initiation_options_.max_num_parallel_flushes;
@@ -373,7 +372,7 @@ void WriteBufferManager::InitiateFlushesThread() {
               (terminate_flushes_thread_ || (num_flushes_to_initiate_ > 0U)));
     };
 
-    InstrumentedMutexLock lock(flushes_mu_.get());
+    InstrumentedMutexLock lock(&flushes_mu_);
     while (StopWaiting() == false) {
       flushes_wakeup_cv_->Wait();
     }
@@ -416,7 +415,7 @@ void WriteBufferManager::InitiateFlushesThread() {
           // Unlocking the flushed_mu_ since flushing (via the initiator cb) may
           // call a WBM service (e.g., ReserveMem()), that, in turn, needs to
           // flushes_mu_lock the same mutex => will get stuck
-          InstrumentedMutexUnlock flushes_mu_unlocker(flushes_mu_.get());
+          InstrumentedMutexUnlock flushes_mu_unlocker(&flushes_mu_);
 
           InstrumentedMutexLock initiators_lock(flushes_initiators_mu_.get());
           // Once we are under the flushes_initiators_mu_ lock, we may check:
@@ -462,7 +461,7 @@ void WriteBufferManager::InitiateFlushesThread() {
 
 void WriteBufferManager::TerminateFlushesThread() {
   {
-    flushes_mu_->Lock();
+    flushes_mu_.Lock();
 
     terminate_flushes_thread_ = true;
     WakeupFlushInitiationThreadLockHeld();
@@ -480,7 +479,7 @@ void WriteBufferManager::FlushStarted(bool wbm_initiated) {
     return;
   }
 
-  flushes_mu_->Lock();
+  flushes_mu_.Lock();
 
   ++num_running_flushes_;
   size_t curr_memory_used = memory_usage();
@@ -493,7 +492,7 @@ void WriteBufferManager::FlushEnded(bool /* wbm_initiated */) {
     return;
   }
 
-  flushes_mu_->Lock();
+  flushes_mu_.Lock();
 
   // The WBM may be enabled after a flush has started. In that case
   // the WBM will not be aware of the number of running flushes at the time
@@ -508,7 +507,7 @@ void WriteBufferManager::FlushEnded(bool /* wbm_initiated */) {
 }
 
 void WriteBufferManager::RecalcFlushInitiationSize() {
-  flushes_mu_->AssertHeld();
+  flushes_mu_.AssertHeld();
 
   if (num_running_flushes_ + num_flushes_to_initiate_ >=
       flush_initiation_options_.max_num_parallel_flushes) {
@@ -523,14 +522,14 @@ void WriteBufferManager::RecalcFlushInitiationSize() {
 
 void WriteBufferManager::ReevaluateNeedForMoreFlushesNoLockHeld(
     size_t curr_memory_used) {
-  flushes_mu_->Lock();
+  flushes_mu_.Lock();
   ReevaluateNeedForMoreFlushesLockHeld(curr_memory_used);
 }
 
 void WriteBufferManager::ReevaluateNeedForMoreFlushesLockHeld(
     size_t curr_memory_used) {
   assert(enabled());
-  flushes_mu_->AssertHeld();
+  flushes_mu_.AssertHeld();
 
   if (ShouldInitiateAnotherFlush(curr_memory_used)) {
     // need to schedule more
@@ -538,7 +537,7 @@ void WriteBufferManager::ReevaluateNeedForMoreFlushesLockHeld(
     RecalcFlushInitiationSize();
     WakeupFlushInitiationThreadLockHeld();
   } else {
-    flushes_mu_->Unlock();
+    flushes_mu_.Unlock();
   }
 }
 
@@ -555,20 +554,20 @@ uint64_t WriteBufferManager::FindInitiator(void* initiator) const {
 }
 
 void WriteBufferManager::WakeupFlushInitiationThreadNoLockHeld() {
-  flushes_mu_->Lock();
+  flushes_mu_.Lock();
   WakeupFlushInitiationThreadLockHeld();
 }
 
 // Assumed the lock is held
 // Releases the lock upon exit
 void WriteBufferManager::WakeupFlushInitiationThreadLockHeld() {
-  flushes_mu_->AssertHeld();
+  flushes_mu_.AssertHeld();
 
   new_flushes_wakeup_ = true;
 
   // Done modifying the shared data. Release the lock so that when the flush
   // initiation thread it may acquire the mutex immediately
-  flushes_mu_->Unlock();
+  flushes_mu_.Unlock();
   flushes_wakeup_cv_->Signal();
 }
 

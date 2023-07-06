@@ -23,12 +23,13 @@
 #include <utility>
 #include <vector>
 
+#include "monitoring/instrumented_mutex.h"
 #include "rocksdb/cache.h"
 
 namespace ROCKSDB_NAMESPACE {
 struct Options;
 class CacheReservationManager;
-class InstrumentedMutex;
+// class InstrumentedMutex;
 class InstrumentedCondVar;
 
 // Interface to block and signal DB instances, intended for RocksDB
@@ -352,7 +353,7 @@ class WriteBufferManager final {
   // Trying to include instumented_mutex.h results in a compilation error
   // so only forward declaration + unique_ptr instead of having a member by
   // value
-  std::unique_ptr<InstrumentedMutex> flushes_mu_;
+  InstrumentedMutex flushes_mu_;
   std::unique_ptr<InstrumentedMutex> flushes_initiators_mu_;
   // Used to wake up the flushes initiation thread when it has work to do
   std::unique_ptr<InstrumentedCondVar> flushes_wakeup_cv_;
