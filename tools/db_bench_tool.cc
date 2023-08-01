@@ -2156,6 +2156,17 @@ struct DBWithColumnFamilies {
   }
 
   void DeleteDBs() {
+    std::string out;
+    std::cout << "\n\n\n\nMemory Usage stats: \n" << std::endl;
+    db->GetProperty("rocksdb.block-cache-usage", &out);
+    std::cout << "rocksdb.block-cache-usage " << out << std::endl;
+    db->GetProperty("rocksdb.estimate-table-readers-mem", &out);
+    std::cout << "rocksdb.estimate-table-readers-mem " << out << std::endl;
+    db->GetProperty("rocksdb.cur-size-all-mem-tables", &out);
+    std::cout << "rocksdb.cur-size-all-mem-tables " << out << std::endl;
+    db->GetProperty("rocksdb.block-cache-pinned-usage", &out);
+    std::cout << "rocksdb.block-cache-pinned-usage " << out << std::endl;
+    std::cout << "=============================================" << std::endl;
     std::for_each(cfh.begin(), cfh.end(),
                   [](ColumnFamilyHandle* cfhi) { delete cfhi; });
     cfh.clear();
