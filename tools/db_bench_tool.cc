@@ -2157,13 +2157,21 @@ struct DBWithColumnFamilies {
 
   void DeleteDBs() {
     std::string out;
+    for(auto& cf : cfh) {
+      auto cfd = static_cast<ColumnFamilyHandleImpl *>(cf)->cfd();
+      std::cout << cf->GetName() << " " << cfd->mem()->MemoryAllocatedBytes() << std::endl;
+    }
     std::cout << "\n\n\n\nMemory Usage stats: \n" << std::endl;
+    for(auto& cf : cfh) {
+      auto cfd = static_cast<ColumnFamilyHandleImpl *>(cf)->cfd();
+      std::cout << "CF Name: " << cf->GetName() << " " << cfd->mem()->MemoryAllocatedBytes() << std::endl;
+    }
     db->GetProperty("rocksdb.block-cache-usage", &out);
     std::cout << "rocksdb.block-cache-usage " << out << std::endl;
     db->GetProperty("rocksdb.estimate-table-readers-mem", &out);
     std::cout << "rocksdb.estimate-table-readers-mem " << out << std::endl;
-    db->GetProperty("rocksdb.cur-size-all-mem-tables", &out);
-    std::cout << "rocksdb.cur-size-all-mem-tables " << out << std::endl;
+    db->GetProperty("rocksdb.size-all-mem-tables", &out);
+    std::cout << "rocksdb.size-all-mem-tables " << out << std::endl;
     db->GetProperty("rocksdb.block-cache-pinned-usage", &out);
     std::cout << "rocksdb.block-cache-pinned-usage " << out << std::endl;
     std::cout << "=============================================" << std::endl;
