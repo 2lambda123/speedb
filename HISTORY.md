@@ -10,6 +10,7 @@ Fix RepeatableThread to work properly with on thread start callback feature (htt
 
 ### Bug Fixes
 db_bench: fix SeekRandomWriteRandom valid check. Use key and value only after checking iterator is valid.
+* spdb memtable: Remove deprecate use_seek_parallel_threshold parmeter (#653)
 
 ### Miscellaneous
 
