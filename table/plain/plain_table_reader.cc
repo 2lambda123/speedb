@@ -205,7 +205,7 @@ InternalIterator* PlainTableReader::NewIterator(
   if (arena == nullptr) {
     return new PlainTableIterator(this, use_prefix_seek);
   } else {
-    auto mem = arena->AllocateAligned(sizeof(PlainTableIterator));
+    auto mem = arena->AllocateAligned(sizeof(PlainTableIterator), "PlainTableReader::NewIterator");
     return new (mem) PlainTableIterator(this, use_prefix_seek);
   }
 }

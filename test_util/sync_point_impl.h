@@ -28,11 +28,11 @@ namespace ROCKSDB_NAMESPACE {
 // Arena depends on SyncPoint and create circular dependency.
 class SingleAllocator : public Allocator {
  public:
-  char* Allocate(size_t) override {
+  char* Allocate(size_t, const char* caller_name) override {
     assert(false);
     return nullptr;
   }
-  char* AllocateAligned(size_t bytes, size_t, Logger*) override {
+  char* AllocateAligned(size_t bytes, const char* caller_name, size_t, Logger*) override {
     buf_.resize(bytes);
     return const_cast<char*>(buf_.data());
   }

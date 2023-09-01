@@ -1627,7 +1627,7 @@ InternalIterator* NewMergingIterator(const InternalKeyComparator* cmp,
     if (arena == nullptr) {
       return new MergingIterator(cmp, list, n, false, prefix_seek_mode);
     } else {
-      auto mem = arena->AllocateAligned(sizeof(MergingIterator));
+      auto mem = arena->AllocateAligned(sizeof(MergingIterator), "MergingIterator");
       return new (mem) MergingIterator(cmp, list, n, true, prefix_seek_mode);
     }
   }
@@ -1637,7 +1637,7 @@ MergeIteratorBuilder::MergeIteratorBuilder(
     const InternalKeyComparator* comparator, Arena* a, bool prefix_seek_mode,
     const Slice* iterate_upper_bound)
     : first_iter(nullptr), use_merging_iter(false), arena(a) {
-  auto mem = arena->AllocateAligned(sizeof(MergingIterator));
+  auto mem = arena->AllocateAligned(sizeof(MergingIterator), "MergingIterator");
   merge_iter = new (mem) MergingIterator(comparator, nullptr, 0, true,
                                          prefix_seek_mode, iterate_upper_bound);
 }

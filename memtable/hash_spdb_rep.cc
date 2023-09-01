@@ -481,7 +481,7 @@ KeyHandle HashSpdbRep::Allocate(const size_t len, char** buf) {
   //     std::max(len, kInlineDataSize) - kInlineDataSize +
   //     sizeof(SpdbKeyHandle);
   SpdbKeyHandle* h =
-      reinterpret_cast<SpdbKeyHandle*>(allocator_->AllocateAligned(alloc_size));
+      reinterpret_cast<SpdbKeyHandle*>(allocator_->AllocateAligned(alloc_size, "HashSpdb"));
   *buf = h->key_;
   return h;
 }
@@ -527,10 +527,10 @@ MemTableRep::Iterator* HashSpdbRep::GetIterator(Arena* arena) {
   if (arena != nullptr) {
     void* mem;
     if (empty_iter) {
-      mem = arena->AllocateAligned(sizeof(SpdbVectorIteratorEmpty));
+      mem = arena->AllocateAligned(sizeof(SpdbVectorIteratorEmpty), "HashSpdbIterator");
       return new (mem) SpdbVectorIteratorEmpty();
     } else {
-      mem = arena->AllocateAligned(sizeof(SpdbVectorIterator));
+      mem = arena->AllocateAligned(sizeof(SpdbVectorIterator), "HashSpdbIterator");
       return new (mem) SpdbVectorIterator(spdb_vectors_cont_, GetComparator());
     }
   }

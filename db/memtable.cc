@@ -347,7 +347,7 @@ Slice MemTableRep::UserKey(const char* key) const {
 }
 
 KeyHandle MemTableRep::Allocate(const size_t len, char** buf) {
-  *buf = allocator_->Allocate(len);
+  *buf = allocator_->Allocate(len, "Memtable");
   return static_cast<KeyHandle>(*buf);
 }
 
@@ -548,7 +548,7 @@ class MemTableIterator : public InternalIterator {
 InternalIterator* MemTable::NewIterator(const ReadOptions& read_options,
                                         Arena* arena) {
   assert(arena != nullptr);
-  auto mem = arena->AllocateAligned(sizeof(MemTableIterator));
+  auto mem = arena->AllocateAligned(sizeof(MemTableIterator), "MemTable::NewIterator");
   return new (mem) MemTableIterator(*this, read_options, arena);
 }
 

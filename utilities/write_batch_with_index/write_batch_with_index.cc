@@ -159,7 +159,7 @@ void WriteBatchWithIndex::Rep::AddNewEntry(uint32_t column_family_id) {
     key.remove_suffix(ts_sz);
   }
 
-  auto* mem = arena.Allocate(sizeof(WriteBatchIndexEntry));
+  auto* mem = arena.Allocate(sizeof(WriteBatchIndexEntry),"WriteBatchWithIndex");
   auto* index_entry =
       new (mem) WriteBatchIndexEntry(last_entry_offset, column_family_id,
                                      key.data() - wb_data.data(), key.size());

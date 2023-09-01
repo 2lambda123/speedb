@@ -43,7 +43,7 @@ class Arena : public Allocator {
                  AllocTracker* tracker = nullptr, size_t huge_page_size = 0);
   ~Arena();
 
-  char* Allocate(size_t bytes) override;
+  char* Allocate(size_t bytes, const char* caller_name) override;
 
   // huge_page_size: if >0, will try to allocate from huage page TLB.
   // The argument will be the size of the page size for huge page TLB. Bytes
@@ -57,7 +57,7 @@ class Arena : public Allocator {
   // normal cases. The messages will be logged to logger. So when calling with
   // huge_page_tlb_size > 0, we highly recommend a logger is passed in.
   // Otherwise, the error message will be printed out to stderr directly.
-  char* AllocateAligned(size_t bytes, size_t huge_page_size = 0,
+  char* AllocateAligned(size_t bytes,  const char* caller_name, size_t huge_page_size = 0,
                         Logger* logger = nullptr) override;
 
   // Returns an estimate of the total memory usage of data allocated
@@ -119,7 +119,7 @@ class Arena : public Allocator {
   AllocTracker* tracker_;
 };
 
-inline char* Arena::Allocate(size_t bytes) {
+inline char* Arena::Allocate(size_t bytes, const char* caller_name) {
   // The semantics of what to return are a bit messy if we allow
   // 0-byte allocations, so we disallow them here (we don't need
   // them for our internal use).

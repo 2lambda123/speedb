@@ -98,7 +98,7 @@ InternalIteratorBase<TValue>* NewErrorInternalIterator(const Status& status,
   if (arena == nullptr) {
     return NewErrorInternalIterator<TValue>(status);
   } else {
-    auto mem = arena->AllocateAligned(sizeof(EmptyInternalIterator<TValue>));
+    auto mem = arena->AllocateAligned(sizeof(EmptyInternalIterator<TValue>), "NewErrorInternalIterator");
     return new (mem) EmptyInternalIterator<TValue>(status);
   }
 }
@@ -119,7 +119,7 @@ InternalIteratorBase<TValue>* NewEmptyInternalIterator(Arena* arena) {
   if (arena == nullptr) {
     return NewEmptyInternalIterator<TValue>();
   } else {
-    auto mem = arena->AllocateAligned(sizeof(EmptyInternalIterator<TValue>));
+    auto mem = arena->AllocateAligned(sizeof(EmptyInternalIterator<TValue>), "NewEmptyInternalIterator");
     return new (mem) EmptyInternalIterator<TValue>(Status::OK());
   }
 }

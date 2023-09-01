@@ -71,7 +71,7 @@ class BlockPrefixIndex::Builder {
  public:
   void Add(const Slice& key_prefix, uint32_t start_block, uint32_t num_blocks) {
     PrefixRecord* record = reinterpret_cast<PrefixRecord*>(
-        arena_.AllocateAligned(sizeof(PrefixRecord)));
+        arena_.AllocateAligned(sizeof(PrefixRecord), "BlockPrefixIndex::Builder"));
     record->prefix = key_prefix;
     record->start_block = start_block;
     record->end_block = start_block + num_blocks - 1;

@@ -55,7 +55,7 @@ DynamicBloom::DynamicBloom(Allocator* allocator, uint32_t total_bits,
   sz += block_bytes - 1;
   assert(allocator);
 
-  char* raw = allocator->AllocateAligned(sz, huge_page_tlb_size, logger);
+  char* raw = allocator->AllocateAligned(sz, "DynamicBloom",huge_page_tlb_size, logger);
   memset(raw, 0, sz);
   auto block_offset = reinterpret_cast<uintptr_t>(raw) % block_bytes;
   if (block_offset > 0) {

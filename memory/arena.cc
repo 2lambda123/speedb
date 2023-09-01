@@ -105,7 +105,7 @@ char* Arena::AllocateFromHugePage(size_t bytes) {
   return addr;
 }
 
-char* Arena::AllocateAligned(size_t bytes, size_t huge_page_size,
+char* Arena::AllocateAligned(size_t bytes, const char* caller_name, size_t huge_page_size,
                              Logger* logger) {
   if (MemMapping::kHugePageSupported && hugetlb_size_ > 0 &&
       huge_page_size > 0 && bytes > 0) {

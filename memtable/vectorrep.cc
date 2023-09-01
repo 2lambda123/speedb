@@ -266,7 +266,7 @@ void VectorRep::Get(const LookupKey& k, void* callback_args,
 MemTableRep::Iterator* VectorRep::GetIterator(Arena* arena) {
   char* mem = nullptr;
   if (arena != nullptr) {
-    mem = arena->AllocateAligned(sizeof(Iterator));
+    mem = arena->AllocateAligned(sizeof(Iterator), "VectorMemtable");
   }
   ReadLock l(&rwlock_);
   // Do not sort here. The sorting would be done the first time
