@@ -22,9 +22,53 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+
+struct ArenaTracker {
+  std::unordered_map<std::string, std::atomic_uint64_t> arena_stats;
+  ArenaTracker() {
+      arena_stats = {{std::piecewise_construct, std::make_tuple("ArenaWrappedDBIter"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("FileIndexer::UpdateIndex"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("MemTable::NewIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("FindLevelFileTest::LevelFileInit"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("FindLevelFileTest::Add"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("DoGenerateLevelFilesBrief"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("TEST_GetLevelIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("Version::AddIteratorsForLevel"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("Version::OverlapWithLevelIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("LogBuffer::AddLogToBuffer"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("arena_test"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("AllocateImplConcurrentArena"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashLinkList"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashLinkListIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashLinkListDynamicIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashSkipList"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashSkipListIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashSkipListDynamicIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashSpdb"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("HashSpdbIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("InlineSkipList"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("SkipList"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("SkipListIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("VectorMemtable"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("CompactionMergingIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("NewErrorInternalIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("NewEmptyInternalIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("MergingIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("BlockBasedTableIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("BlockPrefixIndex::Builder"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("CuckooTableIterator"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("PlainTableBloomV1"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("PlainTableIndexBuilder::FillIndexes"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("DynamicBloom"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("Memtable"), std::make_tuple(0)},
+      {std::piecewise_construct, std::make_tuple("WriteBatchWithIndex"), std::make_tuple(0)}
+  };
+};
+};
 class Arena : public Allocator {
  public:
   // No copying allowed
+
   Arena(const Arena&) = delete;
   void operator=(const Arena&) = delete;
 
