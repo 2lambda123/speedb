@@ -60,12 +60,14 @@ Arena::~Arena() {
     auto it = arena_tracker_.arena_stats.find(itr.second.first);
     if (it != arena_tracker_.arena_stats.end()) {
       it->second.fetch_sub(itr.second.second);
+      arena_tracker_.total.fetch_sub(itr.second.second);
     }
   }
   for (const auto& itr : huge_blocks_) {
     auto it = arena_tracker_.arena_stats.find(itr.second.first);
     if (it != arena_tracker_.arena_stats.end()) {
       it->second.fetch_sub(itr.second.second);
+      arena_tracker_.total.fetch_sub(itr.second.second);
     }
   }
   if (tracker_ != nullptr) {
@@ -111,6 +113,7 @@ char* Arena::AllocateFromHugePage(size_t bytes, const char* caller_name) {
   auto it = arena_tracker_.arena_stats.find(caller_name);
   if (it != arena_tracker_.arena_stats.end()) {
     it->second.fetch_add(bytes);
+    arena_tracker_.total.fetch_add(bytes);
   }
   auto addr = static_cast<char*>(mm.Get());
   if (addr) {
@@ -167,6 +170,7 @@ char* Arena::AllocateNewBlock(size_t block_bytes, const char* caller_name) {
   auto it = arena_tracker_.arena_stats.find(caller_name);
   if (it != arena_tracker_.arena_stats.end()) {
     it->second.fetch_add(block_bytes);
+    arena_tracker_.total.fetch_add(block_bytes);
   }
   blocks_.push_back(std::make_pair(std::unique_ptr<char[]>(block), std::make_pair(caller_name, block_bytes)));
 

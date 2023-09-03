@@ -6,7 +6,6 @@
 // Copyright (c) 2011 The LevelDB Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
-#include "logging/logging.h"
 
 #ifdef GFLAGS
 #ifdef NUMA
@@ -2481,10 +2480,7 @@ class Stats {
           next_report_ += 50000;
         else
           next_report_ += 100000;
-        for (const auto& it : Arena::arena_tracker_.arena_stats) {
-          ROCKS_LOG_DEBUG(db->GetOptions().info_log.get(), "%s : %" PRIu64,
-                          it.first.c_str(), it.second.load());
-        }
+
         fprintf(stderr, "... finished %" PRIu64 " ops%30s\r", done_, "");
       } else {
         uint64_t now = clock_->NowMicros();

@@ -25,6 +25,7 @@ namespace ROCKSDB_NAMESPACE {
 
 struct ArenaTracker {
   std::unordered_map<std::string, std::atomic_uint64_t> arena_stats;
+  std::atomic_uint64_t total = {0};
   ArenaTracker() {
       for (auto const& key : {"ArenaWrappedDBIter",
       "FileIndexer::UpdateIndex",
