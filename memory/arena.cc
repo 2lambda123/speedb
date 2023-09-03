@@ -56,13 +56,13 @@ Arena::Arena(size_t block_size, AllocTracker* tracker, size_t huge_page_size)
 }
 
 Arena::~Arena() {
-  for (auto& itr : blocks_) {
+  for (const auto& itr : blocks_) {
     auto it = arena_tracker_.arena_stats.find(itr.second.first);
     if (it != arena_tracker_.arena_stats.end()) {
       it->second.fetch_sub(itr.second.second);
     }
   }
-  for (auto& itr : huge_blocks_) {
+  for (const auto& itr : huge_blocks_) {
     auto it = arena_tracker_.arena_stats.find(itr.second.first);
     if (it != arena_tracker_.arena_stats.end()) {
       it->second.fetch_sub(itr.second.second);

@@ -1117,9 +1117,8 @@ void DBImpl::DumpStats() {
     stats.clear();
     DumpMallocStats(&stats);
     if (!stats.empty()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                     "------- Malloc STATS -------");
-      ROCKS_LOG_INFO(immutable_db_options_.info_log, "%s", stats.c_str());
+      ROCKS_LOG_INFO(immutable_db_options_.info_log, "--- Malloc STATS %s",
+                     stats.c_str());
     }
   }
 

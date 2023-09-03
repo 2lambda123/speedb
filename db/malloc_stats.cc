@@ -11,11 +11,19 @@
 
 #include <string.h>
 
+#include <atomic>
 #include <memory>
 
 #include "port/jemalloc_helper.h"
 
 namespace ROCKSDB_NAMESPACE {
+struct spd_alloc_info {
+  std::atomic<uint64_t> mem;    // Memory currently allocated
+  std::atomic<uint64_t> count;  // Count of current allocations
+  std::atomic<uint64_t> total;  // total number of allocations
+};
+
+static spd_alloc_info spd_alloc;
 
 #ifdef ROCKSDB_JEMALLOC
 
@@ -48,6 +56,61 @@ void DumpMallocStats(std::string* stats) {
   stats->append(buf.get());
 }
 #else
-void DumpMallocStats(std::string*) {}
+void DumpMallocStats(std::string* str) {
+  char buf[100];
+
+  sprintf(buf, "count=%ld memory=%ldMB total=%ld", spd_alloc.count.load(),
+          spd_alloc.mem.load() / 1024 / 1024, spd_alloc.total.load());
+
+  *str = buf;
+}
 #endif  // ROCKSDB_JEMALLOC
+static inline void spd_accounting_(void* p, bool alloc) {
+  uint64_t real_size = (*((uintptr_t*)p - 1)) & ~7;
+  auto info = &ROCKSDB_NAMESPACE::spd_alloc;
+
+  if (alloc) {
+    info->mem += real_size;
+    info->count++;
+    info->total++;
+  } else {
+    info->mem -= real_size;
+    info->count--;
+  }
+}
+
 }  // namespace ROCKSDB_NAMESPACE
+
+#if defined(OS_LINUX) && !defined(ROCKSDB_JEMALLOC)
+
+void* operator new(size_t size) {
+  void* p = malloc(size);
+  ROCKSDB_NAMESPACE::spd_accounting_(p, true);
+  return p;
+}
+void* operator new[](size_t size) {
+  void* p = malloc(size);
+  ROCKSDB_NAMESPACE::spd_accounting_(p, true);
+  return p;
+}
+
+void operator delete(void* p) {
+  ROCKSDB_NAMESPACE::spd_accounting_(p, false);
+  free(p);
+}
+
+void operator delete[](void* p) {
+  ROCKSDB_NAMESPACE::spd_accounting_(p, false);
+  free(p);
+}
+
+void operator delete(void* p, size_t size) {
+  ROCKSDB_NAMESPACE::spd_accounting_(p, false);
+  free(p);
+}
+
+void operator delete[](void* p, size_t size) {
+  ROCKSDB_NAMESPACE::spd_accounting_(p, false);
+  free(p);
+}
+#endif  // OS_LINUX
