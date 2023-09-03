@@ -17,7 +17,8 @@
 #include "rocksdb/env.h"
 #include "test_util/sync_point.h"
 #include "util/string_util.h"
-
+#include <utility>
+#include <functional>
 namespace ROCKSDB_NAMESPACE {
 
 size_t Arena::OptimizeBlockSize(size_t block_size) {
@@ -32,6 +33,7 @@ size_t Arena::OptimizeBlockSize(size_t block_size) {
 
   return block_size;
 }
+ArenaTracker Arena::arena_tracker_;
 
 Arena::Arena(size_t block_size, AllocTracker* tracker, size_t huge_page_size)
     : kBlockSize(OptimizeBlockSize(block_size)), tracker_(tracker) {
@@ -54,18 +56,30 @@ Arena::Arena(size_t block_size, AllocTracker* tracker, size_t huge_page_size)
 }
 
 Arena::~Arena() {
+  for (auto& itr : blocks_) {
+    auto it = arena_tracker_.arena_stats.find(itr.second.first);
+    if (it != arena_tracker_.arena_stats.end()) {
+      it->second.fetch_sub(itr.second.second);
+    }
+  }
+  for (auto& itr : huge_blocks_) {
+    auto it = arena_tracker_.arena_stats.find(itr.second.first);
+    if (it != arena_tracker_.arena_stats.end()) {
+      it->second.fetch_sub(itr.second.second);
+    }
+  }
   if (tracker_ != nullptr) {
     assert(tracker_->IsMemoryFreed());
     tracker_->FreeMem();
   }
 }
 
-char* Arena::AllocateFallback(size_t bytes, bool aligned) {
+char* Arena::AllocateFallback(size_t bytes, bool aligned, const char* caller_name) {
   if (bytes > kBlockSize / 4) {
     ++irregular_block_num;
     // Object is more than a quarter of our block size.  Allocate it separately
     // to avoid wasting too much space in leftover bytes.
-    return AllocateNewBlock(bytes);
+    return AllocateNewBlock(bytes, caller_name);
   }
 
   // We waste the remaining space in the current block.
@@ -73,11 +87,11 @@ char* Arena::AllocateFallback(size_t bytes, bool aligned) {
   char* block_head = nullptr;
   if (MemMapping::kHugePageSupported && hugetlb_size_ > 0) {
     size = hugetlb_size_;
-    block_head = AllocateFromHugePage(size);
+    block_head = AllocateFromHugePage(size, caller_name);
   }
   if (!block_head) {
     size = kBlockSize;
-    block_head = AllocateNewBlock(size);
+    block_head = AllocateNewBlock(size, caller_name);
   }
   alloc_bytes_remaining_ = size - bytes;
 
@@ -92,11 +106,15 @@ char* Arena::AllocateFallback(size_t bytes, bool aligned) {
   }
 }
 
-char* Arena::AllocateFromHugePage(size_t bytes) {
+char* Arena::AllocateFromHugePage(size_t bytes, const char* caller_name) {
   MemMapping mm = MemMapping::AllocateHuge(bytes);
+  auto it = arena_tracker_.arena_stats.find(caller_name);
+  if (it != arena_tracker_.arena_stats.end()) {
+    it->second.fetch_add(bytes);
+  }
   auto addr = static_cast<char*>(mm.Get());
   if (addr) {
-    huge_blocks_.push_back(std::move(mm));
+    huge_blocks_.push_back(std::make_pair(std::move(mm),std::make_pair(caller_name, bytes)));
     blocks_memory_ += bytes;
     if (tracker_ != nullptr) {
       tracker_->Allocate(bytes);
@@ -114,7 +132,7 @@ char* Arena::AllocateAligned(size_t bytes, const char* caller_name, size_t huge_
         ((bytes - 1U) / huge_page_size + 1U) * huge_page_size;
     assert(reserved_size >= bytes);
 
-    char* addr = AllocateFromHugePage(reserved_size);
+    char* addr = AllocateFromHugePage(reserved_size, caller_name);
     if (addr == nullptr) {
       ROCKS_LOG_WARN(logger,
                      "AllocateAligned fail to allocate huge TLB pages: %s",
@@ -136,17 +154,21 @@ char* Arena::AllocateAligned(size_t bytes, const char* caller_name, size_t huge_
     alloc_bytes_remaining_ -= needed;
   } else {
     // AllocateFallback always returns aligned memory
-    result = AllocateFallback(bytes, true /* aligned */);
+    result = AllocateFallback(bytes, true /* aligned */, caller_name);
   }
   assert((reinterpret_cast<uintptr_t>(result) & (kAlignUnit - 1)) == 0);
   return result;
 }
 
-char* Arena::AllocateNewBlock(size_t block_bytes) {
+char* Arena::AllocateNewBlock(size_t block_bytes, const char* caller_name) {
   // NOTE: std::make_unique zero-initializes the block so is not appropriate
   // here
   char* block = new char[block_bytes];
-  blocks_.push_back(std::unique_ptr<char[]>(block));
+  auto it = arena_tracker_.arena_stats.find(caller_name);
+  if (it != arena_tracker_.arena_stats.end()) {
+    it->second.fetch_add(block_bytes);
+  }
+  blocks_.push_back(std::make_pair(std::unique_ptr<char[]>(block), std::make_pair(caller_name, block_bytes)));
 
   size_t allocated_size;
 #ifdef ROCKSDB_MALLOC_USABLE_SIZE
