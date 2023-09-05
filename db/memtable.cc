@@ -347,7 +347,7 @@ Slice MemTableRep::UserKey(const char* key) const {
 }
 
 KeyHandle MemTableRep::Allocate(const size_t len, char** buf) {
-  *buf = allocator_->Allocate(len, "Memtable");
+  *buf = allocator_->Allocate(len, "DefaultMemtableImpl");
   return static_cast<KeyHandle>(*buf);
 }
 

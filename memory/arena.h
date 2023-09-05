@@ -38,7 +38,6 @@ struct ArenaTracker {
       "Version::OverlapWithLevelIterator",
       "LogBuffer::AddLogToBuffer",
       "arena_test",
-      "AllocateImplConcurrentArena",
       "HashLinkList",
       "HashLinkListIterator",
       "HashLinkListDynamicIterator",
@@ -61,7 +60,7 @@ struct ArenaTracker {
       "PlainTableBloomV1",
       "PlainTableIndexBuilder::FillIndexes",
       "DynamicBloom",
-      "Memtable",
+      "DefaultMemtableImpl",
       "WriteBatchWithIndex" }) {
             arena_stats.emplace(std::piecewise_construct,
               std::forward_as_tuple(key),

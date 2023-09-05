@@ -51,7 +51,7 @@ class ConcurrentArena : public Allocator {
 
   char* Allocate(size_t bytes, const char* caller_name) override {
     return AllocateImpl(bytes, false /*force_arena*/,
-                        [this, caller_name, bytes]() { return arena_.Allocate(bytes, caller_name); });
+                        [this, caller_name, bytes]() { return arena_.Allocate(bytes, caller_name); }, caller_name);
   }
 
   char* AllocateAligned(size_t bytes, const char* caller_name, size_t huge_page_size = 0,
@@ -64,7 +64,7 @@ class ConcurrentArena : public Allocator {
                         [this, caller_name, rounded_up, huge_page_size, logger]() {
                           return arena_.AllocateAligned(rounded_up, caller_name,
                                                         huge_page_size, logger);
-                        });
+                        }, caller_name);
   }
 
   size_t ApproximateMemoryUsage() const {
@@ -126,7 +126,7 @@ class ConcurrentArena : public Allocator {
   }
 
   template <typename Func>
-  char* AllocateImpl(size_t bytes, bool force_arena, const Func& func) {
+  char* AllocateImpl(size_t bytes, bool force_arena, const Func& func, const char* caller_name) {
     size_t cpu;
 
     // Go directly to the arena if the allocation is too large, or if
@@ -182,7 +182,7 @@ class ConcurrentArena : public Allocator {
       avail = exact >= shard_block_size_ / 2 && exact < shard_block_size_ * 2
                   ? exact
                   : shard_block_size_;
-      s->free_begin_ = arena_.AllocateAligned(avail, "AllocateImplConcurrentArena");
+      s->free_begin_ = arena_.AllocateAligned(avail, caller_name);
       Fixup();
     }
     s->allocated_and_unused_.store(avail - bytes, std::memory_order_relaxed);
