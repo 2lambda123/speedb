@@ -2159,6 +2159,11 @@ struct DBWithColumnFamilies {
   }
 
   void DeleteDBs() {
+    if (db) {
+      std::string out;
+      db->GetProperty("rocksdb.estimate-num-keys", &out);
+      std::cout << "Estimated num keys in DB: " << out << std::endl;
+    }
     std::for_each(cfh.begin(), cfh.end(),
                   [](ColumnFamilyHandle* cfhi) { delete cfhi; });
     cfh.clear();
