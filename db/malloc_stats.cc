@@ -104,12 +104,12 @@ void operator delete[](void* p) {
   free(p);
 }
 
-void operator delete(void* p, size_t size) {
+void operator delete(void* p, [[maybe_unused]] size_t size) {
   ROCKSDB_NAMESPACE::spd_accounting_(p, false);
   free(p);
 }
 
-void operator delete[](void* p, size_t size) {
+void operator delete[](void* p, [[maybe_unused]] size_t size) {
   ROCKSDB_NAMESPACE::spd_accounting_(p, false);
   free(p);
 }
