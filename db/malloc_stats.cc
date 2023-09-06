@@ -66,7 +66,7 @@ void DumpMallocStats(std::string* str) {
 }
 #endif  // ROCKSDB_JEMALLOC
 static inline void spd_accounting_(void* p, bool alloc) {
-  uint64_t real_size = (*((uintptr_t*)p - 1)) & ~7;
+  uint64_t [[maybe_unused]] real_size = (*((uintptr_t*)p - 1)) & ~7;
   auto info = &ROCKSDB_NAMESPACE::spd_alloc;
 
   if (alloc) {
